@@ -11,10 +11,8 @@
 
 
 package arduinobot.eece281;
-
-
+//import of documentation relevant classes/objects etc.
 import arduinobot.eece281.util.SystemUiHider;
-
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
@@ -29,21 +27,20 @@ import android.content.Intent;
 import android.speech.RecognizerIntent;
 import java.util.List;
 
+
 /**
- * An example full-screen activity that shows and hides the system UI (i.e.
- * status bar and navigation/system bar) with user interaction.
  *
- * @see SystemUiHider
+ * MainScreen where you are going to be sending your IR commands in accordance to button clicks or
+ * speech input.
+ *
  */
 public class MainScreen extends Activity {
 
     // CODE FOR BUTTONS ********************************************************************************
-    ConsumerIrManager remote;
-    ConsumerIrManager.CarrierFrequencyRange range[];
-    public int gyro = 0;
-    public int count = 0;
+    ConsumerIrManager remote; //creating a ConsumerIrManager instance
 
-    //Set Frequency to 40k.
+    //IR codes are in accordance to decoding from Sony TV HEX codes to the IR frequency and pulse patterns (integer and integer[])
+    //set frequency to 40k.
     private static final int FREQ = 40244;
 
     //pattern for auto mode
@@ -65,48 +62,41 @@ public class MainScreen extends Activity {
     private static final int[] REVERSE = {96, 24, 48, 24, 48, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 48, 24, 24, 24, 24, 24, 24, 24, 24, 1055};
 
 
+    /*
+     * Each of the button methods below are linked to the buttons found in activity_main_screen.xml.
+     * On the button clicks, they will get the usage of the IR blaster and transmit the IR freq and pattern
+     * listed above.
+     */
     public void forwardButtonOnClick(View v)  {
-        if (!(count == 1)) {
             remote = (ConsumerIrManager) this.getSystemService(Context.CONSUMER_IR_SERVICE);
             remote.transmit(FREQ, FORWARD);
-
-        }
     }
 
     public void reverseButtonOnClick(View v) {
-        if (count != 1) {
             remote = (ConsumerIrManager) this.getSystemService(Context.CONSUMER_IR_SERVICE);
             remote.transmit(FREQ, REVERSE);
-        }
     }
 
     public void leftButtonOnClick(View v) {
-        if (count != 1) {
-
-
             remote = (ConsumerIrManager) this.getSystemService(Context.CONSUMER_IR_SERVICE);
             remote.transmit(FREQ, LEFT);
-
-        }
     }
 
     public void rightButtonOnClick(View v) {
-        if (count != 1) {
             remote = (ConsumerIrManager) this.getSystemService(Context.CONSUMER_IR_SERVICE);
             remote.transmit(FREQ, RIGHT);
-        }
     }
 
     public void autoButtonOnClick(View v) {
-        if (count != 1) {
             remote = (ConsumerIrManager) this.getSystemService(Context.CONSUMER_IR_SERVICE);
             remote.transmit(FREQ, AUTO);
-        }
     }
 
     public void stopButtonOnClick(View v) throws InterruptedException {
+        //this is transmitted three times to ensure that the reading will be received when in auto mode
+        //this requires three transmissions as they may miss transmissions while running the automation code
         int index;
-        if (count != 1) {
+
             for (index = 0; index < 2; index++) {
                 remote = (ConsumerIrManager) this.getSystemService(Context.CONSUMER_IR_SERVICE);
                 remote.transmit(FREQ, MANUAL);
@@ -114,25 +104,13 @@ public class MainScreen extends Activity {
             }
             remote = (ConsumerIrManager) this.getSystemService(Context.CONSUMER_IR_SERVICE);
             remote.transmit(FREQ, MANUAL);
-            // TimeUnit.MILLISECONDS.sleep(200);
-        }
+
     }
 
-    public void gyroSwitchClick(View v) {
-
-        if (count == 0) {
-            count++;
-        } else if (count == 1) {
-            gyro = 1;
-            count--;
-        }
-    }
-
+//this speech button is linked to the speech button in activity_main_screen.xml
     public void speechButton (View v) {
-        displaySpeechRecognizer();
-     //   onActivityResult();
+        displaySpeechRecognizer(); //run the Google Android Developer speech recognizer
     }
-
 
 // CODE FOR BUTTONS ********************************************************************************
 
@@ -142,10 +120,9 @@ private static final int SPEECH_REQUEST_CODE = 0;
     // Create an intent that can start the Speech Recognizer activity
     public void displaySpeechRecognizer() {
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-       // intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS,10);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-// Start the activity, the intent will be populated with the speech text
+// Start the activity, the intent will be populated with the speech text (the query will return in onActivityResult)
         startActivityForResult(intent, SPEECH_REQUEST_CODE);
     }
 
@@ -158,8 +135,9 @@ private static final int SPEECH_REQUEST_CODE = 0;
             List<String> results = data.getStringArrayListExtra(
                     RecognizerIntent.EXTRA_RESULTS);
             String spokenText = results.get(0);
-            System.out.println(spokenText);
-            // Do something with spokenText
+            System.out.println(spokenText); //print the spokenText for debugging
+
+            // Process the spokenText and send the corresponding IR codes depending on the query
             if (spokenText.contains("go forward")){
                 remote = (ConsumerIrManager) this.getSystemService(Context.CONSUMER_IR_SERVICE);
                 remote.transmit(FREQ, FORWARD);
@@ -197,6 +175,8 @@ private static final int SPEECH_REQUEST_CODE = 0;
         super.onActivityResult(requestCode, resultCode, data);
     }
 // CODE FOR VOICE COMMAND***************************************************************************
+// The below code is simply the standard UI code for an Android app
+
 
     /**
      * Whether or not the system UI should be auto-hidden after
